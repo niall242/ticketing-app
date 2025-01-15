@@ -148,13 +148,16 @@ def screen_3():
 
 def screen_4():
     reset_window()
-    
+
     # Global variable for selected tickets
     global selected_tickets
-    selected_tickets = {"adult": StringVar(value="None"),
-                        "child": StringVar(value="None"),
-                        "senior": StringVar(value="None"),
-                        "student": StringVar(value="None")}
+
+    selected_tickets = {
+        "adult": {"quantity": StringVar(value="None"), "fare": 21.05},
+        "child": {"quantity": StringVar(value="None"), "fare": 14.10},
+        "senior": {"quantity": StringVar(value="None"), "fare": 10.25},
+        "student": {"quantity": StringVar(value="None"), "fare": 17.50},
+    }
 
     Label(window, text="How many of each tickets would you like?", font=("Arial", 18, "bold")).pack(pady=40)
 
@@ -163,7 +166,7 @@ def screen_4():
     ticket_frame.pack(pady=130)
 
     # Create ticket type rows
-    def create_ticket_row(ticket_type):
+    def create_ticket_row(ticket_type, details):
         frame = Frame(ticket_frame)
         frame.pack(fill=X, pady=5)
 
@@ -171,17 +174,17 @@ def screen_4():
         Label(frame, text=ticket_type.capitalize(), font=("Arial", 18, "bold"), width=10, anchor="w").pack(side=LEFT, padx=10)
 
         # "None" button
-        Radiobutton(frame, text="None", variable=selected_tickets[ticket_type], value="None",
+        Radiobutton(frame, text="None", variable=details["quantity"], value="None",
                     indicatoron=False, font=("Arial", 18), width=6).pack(side=LEFT, padx=5, pady=5)
 
         # Quantity buttons
         for i in range(1, 6):
-            Radiobutton(frame, text=str(i), variable=selected_tickets[ticket_type], value=str(i),
-                        indicatoron=False, font=("Arial", 18), width=5).pack(side=LEFT, padx=5, pady=5)
+            Radiobutton(frame, text=str(i), variable=details["quantity"], value=str(i),
+                indicatoron=False, font=("Arial", 18), width=5).pack(side=LEFT, padx=5, pady=5)
 
     # Add rows for each ticket type
-    for ticket_type in selected_tickets:
-        create_ticket_row(ticket_type)
+    for ticket_type, details in selected_tickets.items():
+        create_ticket_row(ticket_type, details)
 
     # Navigation buttons
     nav_button_frame = Frame(window)
@@ -191,21 +194,26 @@ def screen_4():
     Button(nav_button_frame, text="Next", font=("Arial", 20), command=lambda: validate_ticket_selection(screen_5)).pack(side=LEFT, padx=30)
 
 def validate_ticket_selection(next_screen):
-    # Check if at least one ticket is selected
-    if all(value.get() == "None" for value in selected_tickets.values()):
+    # Check if any ticket quantity is not "None"
+    if all(details["quantity"].get() == "None" for details in selected_tickets.values()):
         show_error("Please select at least one ticket.")
     else:
-        print("Selected Tickets:", {k: v.get() for k, v in selected_tickets.items()})  # Debugging
+        print("Selected Tickets:", {k: details["quantity"].get() for k, details in selected_tickets.items()})  # Debugging
         next_screen()
 
 def screen_5():
     reset_window()
 
     # Get the current time and date
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
 
     # Ticket details for display
-    selected_tickets_summary = {k.capitalize(): v.get() for k, v in selected_tickets.items() if v.get() != "None"}
+    selected_tickets_summary = {
+        k.capitalize(): v["quantity"].get()
+        for k, v in selected_tickets.items()
+        if v["quantity"].get() != "None"  # Access v["quantity"] before calling .get()
+    }
 
     total_travelers = sum(int(v) for v in selected_tickets_summary.values() if v.isdigit())
 
@@ -232,43 +240,148 @@ def screen_5():
         show_error("Invalid zones selected. Please go back and select valid zones.")
         return  # Exit the function early
 
-    adult_per_zone = 2105 
-    child_per_zone = 1410
-    senior_per_zone = 1025
-    student_per_zone = 1750
-
-    adult_price = int(selected_tickets_summary.get("Adult", 0)) * adult_per_zone * num_zones
-    child_price = int(selected_tickets_summary.get("Child", 0)) * child_per_zone * num_zones
-    senior_price = int(selected_tickets_summary.get("Senior", 0)) * senior_per_zone * num_zones
-    student_price = int(selected_tickets_summary.get("Student", 0)) * student_per_zone * num_zones
+    adult_price = float(selected_tickets_summary.get("Adult", 0)) * selected_tickets["adult"]["fare"] * num_zones
+    child_price = float(selected_tickets_summary.get("Child", 0)) * selected_tickets["child"]["fare"] * num_zones
+    senior_price = float(selected_tickets_summary.get("Senior", 0)) * selected_tickets["senior"]["fare"] * num_zones
+    student_price = float(selected_tickets_summary.get("Student", 0)) * selected_tickets["student"]["fare"] * num_zones
 
     total_price = adult_price + child_price + senior_price + student_price
 
-    Label(window, text="Your travel voucher", font=("Arial", 18, "bold")).pack(pady=10)
+    Label(window, text="Your travel voucher", font=("Arial", 22, "bold")).pack(pady=50)
 
     # Information frame
     info_frame = Frame(window)
     info_frame.pack(pady=10)
 
     # Add information rows
-    Label(info_frame, text=f"Time and Date: {current_time}", font=("Arial", 14)).pack(anchor="w")
-    Label(info_frame, text=f"Travelling from: {start_zone.get()}", font=("Arial", 14)).pack(anchor="w")
-    Label(info_frame, text=f"Travelling to: {destination_zone}", font=("Arial", 14)).pack(anchor="w")
-    Label(info_frame, text="Tickets:", font=("Arial", 14)).pack(anchor="w")
+    Label(info_frame, text=f"Time and Date: {current_time}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"Travelling from: {start_zone.get()}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"Travelling to: {destination_zone.get()}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    #    Label(info_frame, text="Tickets:", font=("Arial", 14)).pack(anchor="w")
     for ticket_type, quantity in selected_tickets_summary.items():
-        Label(info_frame, text=f"  {ticket_type}: {quantity}", font=("Arial", 14)).pack(anchor="w")
-    Label(info_frame, text=f"Total number of travelers: {total_travelers}", font=("Arial", 14)).pack(anchor="w")
-    Label(info_frame, text=f"Total price: ${total_price:.2f}", font=("Arial", 14, "bold")).pack(anchor="w")
+        ticket_frame = Frame(info_frame)
+        ticket_frame.pack(fill=X, pady=5)  # Ensure the row fills horizontally and add spacing between rows
+
+        # First label for ticket type and quantity
+        Label(ticket_frame, text=f"  {ticket_type}: {quantity}", font=("Arial", 16), anchor="w").grid(row=0, column=0)
+
+        # Second label for fare and zones
+        Label(ticket_frame, text=f"       ${selected_tickets[ticket_type.lower()]['fare']:.2f} per zone, {num_zones} zones",
+            font=("Arial", 14), anchor="w").grid(row=0, column=1) 
+
+    Label(info_frame, text=f"Total number of travelers: {total_travelers}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"Total price: ${total_price:.2f}", font=("Arial", 22, "bold")).pack(anchor="w", pady=20)
 
     # Navigation buttons
     nav_button_frame = Frame(window)
     nav_button_frame.pack(pady=20)
 
     Button(nav_button_frame, text="Back", font=("Arial", 20), command=screen_4).pack(side=LEFT, padx=30)
-    Button(nav_button_frame, text="Next", font=("Arial", 20), command=screen_6).pack(side=LEFT, padx=30)
+    Button(nav_button_frame, text="Next", font=("Arial", 20), command=lambda: screen_6(total_price)).pack(side=LEFT, padx=30)
 
-def screen_6():
+def screen_6(total_price):
     reset_window()
+
+    Label(window, text=f"Total: ${total_price:.2f}", font=("Arial", 22, "bold")).pack(pady=20)
+    Label(window, text="How would you like to pay?", font=("Arial", 22, "bold")).pack(pady=50)
+
+    # Navigation buttons
+    nav_button_frame = Frame(window)
+    nav_button_frame.pack(pady=20)
+
+    Button(nav_button_frame, text="Cash", font=("Arial", 20), command=lambda: cash(total_price)).pack(side=LEFT, padx=30)
+    Button(nav_button_frame, text="Card", font=("Arial", 20), command=lambda: card(total_price)).pack(side=LEFT, padx=30)
+
+def cash(price):
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    # Display the total price
+    total_label = Label(window, text=f"Total: £{price:.2f}", font=("Arial", 40))
+    total_label.pack(pady=70)
+
+    # Button to insert cash
+    insert_button = Button(window, text="Insert Cash",
+                        font=("Arial", 30),
+                        command=insert_cash)
+    insert_button.pack(pady=30)
+
+
+def insert_cash():
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    printing_label = Label(window, text="Printing tickets...", font=("Arial", 36))
+    printing_label.pack(pady=190)
+
+    window.after(2000, show_thank_you)  # Wait for 2 seconds before showing the thank you message
+
+def card(price):
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    # Display the total price
+    total_label = Label(window, text=f"Total: £{price:.2f}", font=("Arial", 40))
+    total_label.pack(pady=70)
+
+    # Button to insert card
+    insert_button = Button(window, text="Insert Card",
+                        font=("Arial", 30),
+                        command=insert_card)
+    insert_button.pack(pady=30)
+
+
+def insert_card():
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    verifying_label = Label(window, text="Verifying payment...", font=("Arial", 36))
+    verifying_label.pack(pady=190)
+
+    window.after(2000, show_payment_accepted)  # Wait for 2 seconds before showing payment accepted
+
+
+def show_payment_accepted():
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    payment_label = Label(window, text="Payment accepted. Printing tickets...",
+                        wraplength=650,
+                        font=("Arial", 36))
+    payment_label.pack(pady=190)
+
+    window.after(3000, show_thank_you)  # Wait for 3 seconds before showing the thank you message
+
+def show_thank_you():
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    # Show thank you message
+    thank_you_label = Label(window, text="Thank you. Would you like to buy more tickets?",  wraplength= 600, font=("Arial", 36))
+    thank_you_label.pack(pady=190)
+
+    # Navigation buttons
+    nav_button_frame = Frame(window)
+    nav_button_frame.pack(pady=20)
+
+    Button(nav_button_frame, text="Yes", font=("Arial", 20), command= screen_2).pack(side=LEFT, padx=30)
+    Button(nav_button_frame, text="No", font=("Arial", 20), command= have_nice_day).pack(side=LEFT, padx=30)
+
+def have_nice_day():
+    # Clear the previous screen
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    # Show thank you message
+    thank_you_label = Label(window, text="Thank you. Have a nice day", font=("Arial", 36))
+    thank_you_label.pack(pady=190)
+
+    window.after(3000, screen_1)  # Wait for 3 seconds before showing the thank you messag   
 
 # Initialize the app
 screen_1()
