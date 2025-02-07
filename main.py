@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import os
 import datetime  
+import uuid
 
 # List of stations and zones
 stations = [
@@ -25,15 +26,42 @@ CENTRAL = ["Yaen", "Rede", "Bylyn", "Frestin", "Soth", "Lomil", "Ninia",
 current_screen = None
 selected_tickets = {"adult": 0, "child": 0, "senior": 0, "student": 0}
 
-map_image_path = os.path.join(os.path.dirname(__file__), "underground-map.PNG")  # Path to the map image
+map_image_path = os.path.join(os.path.dirname(__file__), "smaller-map.PNG")  # Path to the map image
 
 # Initialize main window
 window = Tk()
 window.title("Centrala Underground Ticket App")
-window.geometry("1050x820")
+window.geometry("1000x600")
 
 start_zone = StringVar(value="None")  # Default to no selection
 destination_zone = StringVar(value="None")  # Default to no selection
+
+class TravelTicket:
+    """Represents a travel ticket with relevant details."""
+    def __init__(self, start_zone, destination_zone, selected_tickets_summary, total_price):
+        self.ticket_id = str(uuid.uuid4())[:8]  # Generate a short unique ID
+        self.timestamp = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        self.start_zone = start_zone
+        self.destination_zone = destination_zone
+        self.selected_tickets_summary = selected_tickets_summary
+        self.total_price = total_price
+
+    def print_ticket(self):
+        """Returns a formatted string representing the ticket for future printing."""
+        ticket_text = f"--- Centrala Underground Travel Ticket ---\n"
+        ticket_text += f"Ticket ID: {self.ticket_id}\n"
+        ticket_text += f"Time and Date: {self.timestamp}\n"
+        ticket_text += f"From: {self.start_zone}\n"
+        ticket_text += f"To: {self.destination_zone}\n"
+        ticket_text += f"Tickets:\n"
+        
+        for ticket_type, quantity in self.selected_tickets_summary.items():
+            ticket_text += f"  {ticket_type}: {quantity}\n"
+
+        ticket_text += f"Total Price: ${self.total_price:.2f}\n"
+        ticket_text += f"------------------------------------------"
+        
+        return ticket_text
 
 def reset_window():
     for widget in window.winfo_children():
@@ -159,11 +187,11 @@ def screen_4():
         "student": {"quantity": StringVar(value="None"), "fare": 17.50},
     }
 
-    Label(window, text="How many of each tickets would you like?", font=("Arial", 18, "bold")).pack(pady=40)
+    Label(window, text="How many of each tickets would you like?", font=("Arial", 18, "bold")).pack(pady=10)
 
     # Ticket selection frame
     ticket_frame = Frame(window)
-    ticket_frame.pack(pady=130)
+    ticket_frame.pack(pady=30)
 
     # Create ticket type rows
     def create_ticket_row(ticket_type, details):
@@ -188,7 +216,7 @@ def screen_4():
 
     # Navigation buttons
     nav_button_frame = Frame(window)
-    nav_button_frame.pack(pady=20)
+    nav_button_frame.pack(pady=0)
 
     Button(nav_button_frame, text="Back", font=("Arial", 20), command=screen_3).pack(side=LEFT, padx=30)
     Button(nav_button_frame, text="Next", font=("Arial", 20), command=lambda: validate_ticket_selection(screen_5)).pack(side=LEFT, padx=30)
@@ -207,70 +235,43 @@ def screen_5():
     # Get the current time and date
     current_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
-
-    # Ticket details for display
+    # Collect ticket selections
     selected_tickets_summary = {
         k.capitalize(): v["quantity"].get()
         for k, v in selected_tickets.items()
-        if v["quantity"].get() != "None"  # Access v["quantity"] before calling .get()
+        if v["quantity"].get() != "None"
     }
 
     total_travelers = sum(int(v) for v in selected_tickets_summary.values() if v.isdigit())
 
     # Calculate total price
+    total_price = calculate_total_fare(start_zone, destination_zone, selected_tickets_summary, selected_tickets)
 
-    print(start_zone.get())
-    print(destination_zone.get())
-    # 9 Scenarios for how many zones travelling in
-    if (start_zone.get() == "Central" and destination_zone.get() == "Central") or \
-        (start_zone.get() == "Midtown" and destination_zone.get() == "Midtown") or \
-        (start_zone.get() == "Downtown" and destination_zone.get() == "Downtown"):
-            num_zones = 1
-    elif (start_zone.get() == "Central" and destination_zone.get() == "Midtown") or \
-        (start_zone.get() == "Midtown" and destination_zone.get() == "Central"):
-            num_zones = 2
-    elif (start_zone.get() == "Central" and destination_zone.get() == "Downtown") or \
-        (start_zone.get() == "Downtown" and destination_zone.get() == "Central"):
-            num_zones = 3
-    elif (start_zone.get() == "Midtown" and destination_zone.get() == "Downtown") or \
-        (start_zone.get() == "Downtown" and destination_zone.get() == "Midtown"):
-            num_zones = 2
-    else:
-        # Fallback in case no valid zones are set
-        show_error("Invalid zones selected. Please go back and select valid zones.")
-        return  # Exit the function early
+    if total_price is None:
+        return  # Stop execution if there was an error in zone selection
 
-    adult_price = float(selected_tickets_summary.get("Adult", 0)) * selected_tickets["adult"]["fare"] * num_zones
-    child_price = float(selected_tickets_summary.get("Child", 0)) * selected_tickets["child"]["fare"] * num_zones
-    senior_price = float(selected_tickets_summary.get("Senior", 0)) * selected_tickets["senior"]["fare"] * num_zones
-    student_price = float(selected_tickets_summary.get("Student", 0)) * selected_tickets["student"]["fare"] * num_zones
+    # Create a TravelTicket object
+    ticket = TravelTicket(start_zone.get(), destination_zone.get(), selected_tickets_summary, total_price)
 
-    total_price = adult_price + child_price + senior_price + student_price
-
-    Label(window, text="Your travel voucher", font=("Arial", 22, "bold")).pack(pady=50)
+    Label(window, text="Your Travel Ticket", font=("Arial", 22, "bold")).pack(pady=50)
 
     # Information frame
     info_frame = Frame(window)
     info_frame.pack(pady=10)
 
-    # Add information rows
-    Label(info_frame, text=f"Time and Date: {current_time}", font=("Arial", 16)).pack(anchor="w", pady=5)
-    Label(info_frame, text=f"Travelling from: {start_zone.get()}", font=("Arial", 16)).pack(anchor="w", pady=5)
-    Label(info_frame, text=f"Travelling to: {destination_zone.get()}", font=("Arial", 16)).pack(anchor="w", pady=5)
-    #    Label(info_frame, text="Tickets:", font=("Arial", 14)).pack(anchor="w")
-    for ticket_type, quantity in selected_tickets_summary.items():
-        ticket_frame = Frame(info_frame)
-        ticket_frame.pack(fill=X, pady=5)  # Ensure the row fills horizontally and add spacing between rows
+    Label(info_frame, text=f"Ticket ID: {ticket.ticket_id}", font=("Arial", 16, "bold")).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"Time and Date: {ticket.timestamp}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"From: {ticket.start_zone}", font=("Arial", 16)).pack(anchor="w", pady=5)
+    Label(info_frame, text=f"To: {ticket.destination_zone}", font=("Arial", 16)).pack(anchor="w", pady=5)
 
-        # First label for ticket type and quantity
-        Label(ticket_frame, text=f"  {ticket_type}: {quantity}", font=("Arial", 16), anchor="w").grid(row=0, column=0)
-
-        # Second label for fare and zones
-        Label(ticket_frame, text=f"       ${selected_tickets[ticket_type.lower()]['fare']:.2f} per zone, {num_zones} zones",
-            font=("Arial", 14), anchor="w").grid(row=0, column=1) 
+    for ticket_type, quantity in ticket.selected_tickets_summary.items():
+        Label(info_frame, text=f"  {ticket_type}: {quantity}", font=("Arial", 16)).pack(anchor="w", pady=5)
 
     Label(info_frame, text=f"Total number of travelers: {total_travelers}", font=("Arial", 16)).pack(anchor="w", pady=5)
-    Label(info_frame, text=f"Total price: ${total_price:.2f}", font=("Arial", 22, "bold")).pack(anchor="w", pady=20)
+    Label(info_frame, text=f"Total price: ${ticket.total_price:.2f}", font=("Arial", 22, "bold")).pack(anchor="w", pady=20)
+
+    # Store ticket object for later use (e.g., printing)
+    window.ticket_object = ticket  # Store the ticket in the window object
 
     # Navigation buttons
     nav_button_frame = Frame(window)
@@ -291,6 +292,42 @@ def screen_6(total_price):
 
     Button(nav_button_frame, text="Cash", font=("Arial", 20), command=lambda: cash(total_price)).pack(side=LEFT, padx=30)
     Button(nav_button_frame, text="Card", font=("Arial", 20), command=lambda: card(total_price)).pack(side=LEFT, padx=30)
+
+def calculate_total_fare(start_zone, destination_zone, selected_tickets_summary, selected_tickets):
+    """Calculate the total fare based on the number of zones and ticket quantities."""
+    
+    print(start_zone.get())
+    print(destination_zone.get())
+
+    # Determine the number of zones traveled
+    if (start_zone.get() == "Central" and destination_zone.get() == "Central") or \
+       (start_zone.get() == "Midtown" and destination_zone.get() == "Midtown") or \
+       (start_zone.get() == "Downtown" and destination_zone.get() == "Downtown"):
+        num_zones = 1
+    elif (start_zone.get() == "Central" and destination_zone.get() == "Midtown") or \
+         (start_zone.get() == "Midtown" and destination_zone.get() == "Central"):
+        num_zones = 2
+    elif (start_zone.get() == "Central" and destination_zone.get() == "Downtown") or \
+         (start_zone.get() == "Downtown" and destination_zone.get() == "Central"):
+        num_zones = 3
+    elif (start_zone.get() == "Midtown" and destination_zone.get() == "Downtown") or \
+         (start_zone.get() == "Downtown" and destination_zone.get() == "Midtown"):
+        num_zones = 2
+    else:
+        # Fallback in case no valid zones are set
+        show_error("Invalid zones selected. Please go back and select valid zones.")
+        return None  # Return None to indicate an error
+
+    # Calculate the total fare based on selected tickets
+    adult_price = float(selected_tickets_summary.get("Adult", 0)) * selected_tickets["adult"]["fare"] * num_zones
+    child_price = float(selected_tickets_summary.get("Child", 0)) * selected_tickets["child"]["fare"] * num_zones
+    senior_price = float(selected_tickets_summary.get("Senior", 0)) * selected_tickets["senior"]["fare"] * num_zones
+    student_price = float(selected_tickets_summary.get("Student", 0)) * selected_tickets["student"]["fare"] * num_zones
+
+    total_price = adult_price + child_price + senior_price + student_price
+
+    return total_price  # Return the computed total price
+
 
 def cash(price):
     for widget in window.winfo_children():
