@@ -7,6 +7,8 @@ import os
 import datetime  
 import uuid    # Generates unique IDs
 
+FONT = "Tahoma"
+
 # List of stations and zones
 stations = [
     "Erean", "Brunad", "Marend", "Ryall", "Pryn", "Ederif", "Ruril",
@@ -69,24 +71,50 @@ class TravelTicket:
 
 # The window must be reset after every new screen
 def reset_window():
-    for widget in window.winfo_children():
-        widget.destroy()
+    try:
+        for widget in window.winfo_children():
+            widget.destroy()
+
+    except Exception as e:
+        print(f"Warning: Could not reset window - {e}")
 
 # Error messages when the correct buttons are not pressed
-def show_error(message):
-    messagebox.showerror("Error", message)
+def display_error(message):
+    error_popup = Toplevel(window)
+    error_popup.title("Error")
+    error_popup.geometry("300x100")
+
+    # Center the error popup
+    x = window.winfo_x() + (window.winfo_width() // 2) - 150
+    y = window.winfo_y() + (window.winfo_height() // 2) - 50
+    error_popup.geometry(f"300x100+{x}+{y}")
+
+    Label(error_popup, text=message, fg="red").pack(pady=10)
+    Button(error_popup, text="OK", command=error_popup.destroy).pack()
+'''def show_error(message):
+    messagebox.showerror("Error", message)'''
 
 # Welcome screen
 def screen_1():
     reset_window()
 
+    def open_help_screen():
+        import trial  # Import when needed to prevent circular import
+        trial.help_screen()  # Call help_screen() from trial.py
+
+    help_button = Button(window, text="I Need Help",
+                        font=(FONT, 13),
+                        command=open_help_screen)
+    help_button.place(x=850, y=10)  # Adjust placement to top-right corner
+
     Label(window, text="Welcome to Centrala Underground", font=("Arial", 18, "bold")).pack(pady=5)
 
     # Map display
     map_image = PhotoImage(file=map_image_path) 
+    window.map_image = map_image  # Prevent garbage collection
     map_label = Label(window, image=map_image)
     map_label.pack(pady=0)
-    window.map_image = map_image  # Prevent garbage collection
+
 
     # Table display
     table_frame = Frame(window)
@@ -96,27 +124,40 @@ def screen_1():
     central_frame = Frame(table_frame)
     central_frame.pack(fill=X, pady=5)
     Label(central_frame, text="Central Zone (Pink/Grey): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(central_frame, text=", ".join(sorted(CENTRAL)), font=("Arial", 14), anchor="w").pack(side=LEFT, padx=5)
+    Label(central_frame, text=", ".join(sorted(CENTRAL)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
 
     # Midtown zone station list
     midtown_frame = Frame(table_frame)
     midtown_frame.pack(fill=X, pady=5)
     Label(midtown_frame, text="Midtown Zone (Blue): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(midtown_frame, text=", ".join(sorted(MIDTOWN)), font=("Arial", 14), anchor="w").pack(side=LEFT, padx=5)
+    Label(midtown_frame, text=", ".join(sorted(MIDTOWN)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
 
     # Downtown zone station list
     downtown_frame = Frame(table_frame)
     downtown_frame.pack(fill=X, pady=5)
     Label(downtown_frame, text="Downtown Zone (Yellow): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(downtown_frame, text=", ".join(sorted(DOWNTOWN)), font=("Arial", 14), anchor="w").pack(side=LEFT, padx=5)
+    Label(downtown_frame, text=", ".join(sorted(DOWNTOWN)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
 
-    Button(window, text="Next", font=("Arial", 24), command=screen_2).pack(side=BOTTOM, pady=5)
+    Button(window, text="Next", font=("Arial", 24), command=screen_2).pack(side=BOTTOM, pady=15)
 
 def screen_2():
     reset_window()
 
+    def open_help_screen():
+        import trial  # Import when needed to prevent circular import
+        trial.help_screen()  # Call help_screen() from trial.py
+
+    help_button = Button(window, text="I Need Help",
+                        font=(FONT, 13),
+                        command=open_help_screen)
+    help_button.place(x=850, y=10)  # Adjust placement to top-right corner
     # Reset the StringVar to ensure no button is selected by default
     start_zone.set("None")
+
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
 
     Label(window, text="What zone are you in (start zone)?", font=("Arial", 18, "bold")).pack(pady=5)
 
@@ -128,7 +169,7 @@ def screen_2():
 
     # Zone buttons frame - frames allow multiple buttons to appear on the same line
     button_frame = Frame(window)
-    button_frame.pack(fill=NONE, pady=10)
+    button_frame.pack(fill=NONE, pady=25)
 
     # Zone buttons
     # These button presses are stored in variables
@@ -146,7 +187,7 @@ def screen_2():
 
 def validate_selection(zone, next_screen):
     if zone.get() in ("None"):  # Check if no valid button is selected
-        show_error("Please select a zone before proceeding.")
+        display_error("Please select a zone before proceeding.")
     else:   # If all is good, go to next screen
         next_screen()
 
@@ -154,8 +195,21 @@ def validate_selection(zone, next_screen):
 def screen_3():
     reset_window()
 
+    def open_help_screen():
+        import trial  # Import when needed to prevent circular import
+        trial.help_screen()  # Call help_screen() from trial.py
+
+    help_button = Button(window, text="I Need Help",
+                        font=(FONT, 13),
+                        command=open_help_screen)
+    help_button.place(x=850, y=10)  # Adjust placement to top-right corner
     # Reset the StringVar to ensure no button is selected by default
     destination_zone.set("None")
+
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
 
     Label(window, text="Where are you going (destination zone)?", font=("Arial", 18, "bold")).pack(pady=5)
 
@@ -167,7 +221,7 @@ def screen_3():
 
     # Zone buttons frame
     button_frame = Frame(window)
-    button_frame.pack(fill=NONE, pady=10)
+    button_frame.pack(fill=NONE, pady=25)
 
     # Zone buttons
     # These button presses are stored in variables
@@ -186,8 +240,21 @@ def screen_3():
 def screen_4():
     reset_window()
 
+    def open_help_screen():
+        import trial  # Import when needed to prevent circular import
+        trial.help_screen()  # Call help_screen() from trial.py
+
+    help_button = Button(window, text="I Need Help",
+                        font=(FONT, 13),
+                        command=open_help_screen)
+    help_button.place(x=850, y=10)  # Adjust placement to top-right corner
     # Global variable for selected tickets
     global selected_tickets
+
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
 
     # Dictionary is created to allow storage of all 4 ticket types
     selected_tickets = {
@@ -197,7 +264,7 @@ def screen_4():
         "student": {"quantity": StringVar(value="None"), "fare": 17.50},
     }
 
-    Label(window, text="How many of each tickets would you like?", font=("Arial", 18, "bold")).pack(pady=10)
+    Label(window, text="How many of each tickets would you like?", font=("Arial", 18, "bold")).pack(pady=35)
 
     # Ticket selection frame
     ticket_frame = Frame(window)
@@ -235,7 +302,7 @@ def screen_4():
 def validate_ticket_selection(next_screen):
     # Check if no tickets are selected
     if all(details["quantity"].get() == "None" for details in selected_tickets.values()):
-        show_error("Please select at least one ticket.")
+        display_error("Please select at least one ticket.")
     else:   # If all is good, go to next screen
         print("Selected Tickets:", {k: details["quantity"].get() for k, details in selected_tickets.items()})   # For debugging purposes to see if button 
                                                                                                                 # presses are saved properly
@@ -243,6 +310,20 @@ def validate_ticket_selection(next_screen):
 
 def screen_5():
     reset_window()
+
+    def open_help_screen():
+        import trial  # Import when needed to prevent circular import
+        trial.help_screen()  # Call help_screen() from trial.py
+
+    help_button = Button(window, text="I Need Help",
+                        font=(FONT, 13),
+                        command=open_help_screen)
+    help_button.place(x=850, y=10)  # Adjust placement to top-right corner
+
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
 
     # Get the current time and date
     current_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
@@ -266,7 +347,7 @@ def screen_5():
     # Create a TravelTicket object
     ticket = TravelTicket(start_zone.get(), destination_zone.get(), selected_tickets_summary, total_price)
 
-    Label(window, text="Your Travel Ticket", font=("Arial", 22, "bold")).pack(pady=50)
+    Label(window, text="Your Travel Ticket", font=("Arial", 22, "bold")).pack(pady=10)
 
     # Information frame
     info_frame = Frame(window)
@@ -282,7 +363,7 @@ def screen_5():
         Label(info_frame, text=f"  {ticket_type}: {quantity}", font=("Arial", 16)).pack(anchor="w", pady=5)
 
     Label(info_frame, text=f"Total number of travelers: {total_travelers}", font=("Arial", 16)).pack(anchor="w", pady=5)
-    Label(info_frame, text=f"Total price: ${ticket.total_price:.2f}", font=("Arial", 22, "bold")).pack(anchor="w", pady=20)
+    Label(info_frame, text=f"Total price: ${ticket.total_price:.2f}", font=("Arial", 22, "bold")).pack(anchor="w", pady=10)
 
     # Store ticket object for later use (e.g., printing)
     window.ticket_object = ticket 
@@ -297,12 +378,20 @@ def screen_5():
 def screen_6(total_price):
     reset_window()
 
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
+
+    screen_6_frame = Frame(window)
+    screen_6_frame.pack(pady=90)
+
     # Total price and payment option
-    Label(window, text=f"Total: ${total_price:.2f}", font=("Arial", 22, "bold")).pack(pady=20)
-    Label(window, text="How would you like to pay?", font=("Arial", 22, "bold")).pack(pady=50)
+    Label(screen_6_frame, text=f"Total: ${total_price:.2f}", font=("Arial", 22, "bold")).pack(pady=20)
+    Label(screen_6_frame, text="How would you like to pay?", font=("Arial", 22, "bold")).pack(pady=50)
 
     # Navigation buttons - Cash/Card
-    nav_button_frame = Frame(window)
+    nav_button_frame = Frame(screen_6_frame)
     nav_button_frame.pack(pady=20)
 
     Button(nav_button_frame, text="Cash", font=("Arial", 20), command=lambda: cash(total_price)).pack(side=LEFT, padx=30)
@@ -314,37 +403,48 @@ def calculate_total_fare(start_zone, destination_zone, selected_tickets_summary,
     print(start_zone.get())    # For debugging
     print(destination_zone.get())    # For debugging
 
-    # Determine the number of zones traveled
-    if (start_zone.get() == "Central" and destination_zone.get() == "Central"):
-        num_zones = 1
-    elif (start_zone.get() == "Midtown" and destination_zone.get() == "Midtown"):
-        num_zones = 2
-    elif (start_zone.get() == "Downtown" and destination_zone.get() == "Downtown"):
-        num_zones = 3
-    elif (start_zone.get() == "Central" and destination_zone.get() == "Midtown") or \
-        (start_zone.get() == "Midtown" and destination_zone.get() == "Central"):
-        num_zones = 2
-    elif (start_zone.get() == "Central" and destination_zone.get() == "Downtown") or \
-        (start_zone.get() == "Downtown" and destination_zone.get() == "Central"):
-        num_zones = 3
-    elif (start_zone.get() == "Midtown" and destination_zone.get() == "Downtown") or \
-        (start_zone.get() == "Downtown" and destination_zone.get() == "Midtown"):
-        num_zones = 2
-    else:
-        # Fallback in case no valid zones are set
-        show_error("Invalid zones selected. Please go back and select valid zones.")
-        return None  # Return None to indicate an error
+    try:
+        # Determine the number of zones traveled
+        if (start_zone.get() == "Central" and destination_zone.get() == "Central"):
+            num_zones = 1
+        elif (start_zone.get() == "Midtown" and destination_zone.get() == "Midtown"):
+            num_zones = 2
+        elif (start_zone.get() == "Downtown" and destination_zone.get() == "Downtown"):
+            num_zones = 3
+        elif (start_zone.get() == "Central" and destination_zone.get() == "Midtown") or \
+            (start_zone.get() == "Midtown" and destination_zone.get() == "Central"):
+            num_zones = 2
+        elif (start_zone.get() == "Central" and destination_zone.get() == "Downtown") or \
+            (start_zone.get() == "Downtown" and destination_zone.get() == "Central"):
+            num_zones = 3
+        elif (start_zone.get() == "Midtown" and destination_zone.get() == "Downtown") or \
+            (start_zone.get() == "Downtown" and destination_zone.get() == "Midtown"):
+            num_zones = 2
+        else:
+            # Fallback in case no valid zones are set
+            display_error("Invalid zones selected. Please go back and select valid zones.")
+            return None  # Return None to indicate an error
 
-    # Calculate the total fare based on selected tickets
-    adult_price = float(selected_tickets_summary.get("Adult", 0)) * selected_tickets["adult"]["fare"] * num_zones
-    child_price = float(selected_tickets_summary.get("Child", 0)) * selected_tickets["child"]["fare"] * num_zones
-    senior_price = float(selected_tickets_summary.get("Senior", 0)) * selected_tickets["senior"]["fare"] * num_zones
-    student_price = float(selected_tickets_summary.get("Student", 0)) * selected_tickets["student"]["fare"] * num_zones
+        # Calculate the total fare based on selected tickets
+        adult_price = float(selected_tickets_summary.get("Adult", 0)) * selected_tickets["adult"]["fare"] * num_zones
+        child_price = float(selected_tickets_summary.get("Child", 0)) * selected_tickets["child"]["fare"] * num_zones
+        senior_price = float(selected_tickets_summary.get("Senior", 0)) * selected_tickets["senior"]["fare"] * num_zones
+        student_price = float(selected_tickets_summary.get("Student", 0)) * selected_tickets["student"]["fare"] * num_zones
 
-    total_price = adult_price + child_price + senior_price + student_price
+        total_price = adult_price + child_price + senior_price + student_price
 
-    return total_price  # Return the computed total price
+        return total_price  # Return the computed total price
 
+    except ValueError as e:
+        display_error(f"Error: {e}")
+        return None
+    except KeyError as e:
+        display_error(f"Missing ticket type: {e}")
+        return None
+    except Exception as e:
+        display_error(f"Unexpected error: {str(e)}")
+        return None
+    
 
 # The functions below are just there to simulate a payment gateway
 
@@ -352,9 +452,14 @@ def calculate_total_fare(start_zone, destination_zone, selected_tickets_summary,
 def cash(price):
     reset_window()
 
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
+
     # Display the total price
     total_label = Label(window, text=f"Total: £{price:.2f}", font=("Arial", 40))
-    total_label.pack(pady=70)
+    total_label.pack(pady=80)
 
     # Button to insert cash
     insert_button = Button(window, text="Insert Cash",
@@ -367,16 +472,21 @@ def insert_cash():
     reset_window()
 
     printing_label = Label(window, text="Printing tickets...", font=("Arial", 36))
-    printing_label.pack(pady=190)
+    printing_label.pack(pady=230)
 
     window.after(2000, show_thank_you)  # Wait for 2 seconds before showing the thank you message
 
 def card(price):
     reset_window()
 
+    start_again = Button(window, text="Start Again",
+                        font=(FONT, 13),
+                        command=screen_1)
+    start_again.place(x=50, y=10)  # Adjust placement to top-left corner
+
     # Display the total price
     total_label = Label(window, text=f"Total: £{price:.2f}", font=("Arial", 40))
-    total_label.pack(pady=70)
+    total_label.pack(pady=80)
 
     # Button to insert card
     insert_button = Button(window, text="Insert Card",
@@ -389,7 +499,7 @@ def insert_card():
     reset_window()
 
     verifying_label = Label(window, text="Verifying payment...", font=("Arial", 36))
-    verifying_label.pack(pady=190)
+    verifying_label.pack(pady=230)
 
     window.after(2000, show_payment_accepted)  # Wait for 2 seconds before showing payment accepted
 
@@ -400,7 +510,7 @@ def show_payment_accepted():
     payment_label = Label(window, text="Payment accepted. Printing tickets...",
                         wraplength=650,
                         font=("Arial", 36))
-    payment_label.pack(pady=190)
+    payment_label.pack(pady=230)
 
     window.after(3000, show_thank_you)  # Wait for 3 seconds before showing the thank you message
 
@@ -409,7 +519,7 @@ def show_thank_you():
 
     # Show thank you message
     thank_you_label = Label(window, text="Thank you. Would you like to buy more tickets?",  wraplength= 600, font=("Arial", 36))
-    thank_you_label.pack(pady=190)
+    thank_you_label.pack(pady=150)
 
     # Navigation buttons
     nav_button_frame = Frame(window)
@@ -423,10 +533,12 @@ def have_nice_day():
 
     # Show thank you message
     thank_you_label = Label(window, text="Thank you. Have a nice day", font=("Arial", 36))
-    thank_you_label.pack(pady=190)
+    thank_you_label.pack(pady=230)
 
     window.after(3000, window.destroy)  # Close the app after 3 seconds
 
 # Initialize the app
-screen_1()
-window.mainloop()
+if __name__ == "__main__":
+    screen_1()  # This should only run at startup
+    window.mainloop()
+
