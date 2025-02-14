@@ -4,6 +4,7 @@
 import tkinter as tk
 from datetime import datetime, time as dt_time
 from datetime import timedelta
+import os
 
 FONT = "Tahoma"
 
@@ -34,11 +35,11 @@ def create_trial_vars():
     global trial_selected_station, trial_selected_time, trial_is_return
     global trial_adult_tickets, trial_child_tickets, trial_senior_tickets, trial_student_tickets 
     global trial_departing_from_here, trial_departing_today, trial_departure_station, trial_departure_date
+    global map_image_path
 
     trial_selected_station = tk.StringVar(master=trial_window)
     trial_selected_time = tk.StringVar(master=trial_window)
     trial_is_return = tk.StringVar(master=trial_window, value="No")
-    #trial_number_of_tickets = tk.IntVar(master=trial_window)
     trial_adult_tickets = tk.IntVar(master=trial_window, value=0)
     trial_child_tickets = tk.IntVar(master=trial_window, value=0)
     trial_senior_tickets = tk.IntVar(master=trial_window, value=0)
@@ -47,6 +48,7 @@ def create_trial_vars():
     trial_departing_today = tk.StringVar(master=trial_window, value="Yes")
     trial_departure_station = tk.StringVar(master=trial_window, value="Centrala")
     trial_departure_date = tk.StringVar(master=trial_window, value=datetime.now().strftime("%Y-%m-%d"))
+    map_image_path = os.path.join(os.path.dirname(__file__), "smaller-map.PNG")  # Path to the map image
 
 # help_screen function
 def help_screen():
@@ -113,6 +115,8 @@ def trial_mode():
     tk.Label(trial_window, text=f"Welcome to {STATION_ID} Station", font=("Arial", 18, "bold")).pack(pady=10)
 
     tk.Button(trial_window, text="Reset Buttons", font=(FONT, 13), command=trial_mode).place(x=850, y=10)  # Adjust placement to top-right corner
+
+    tk.Button(trial_window, text="Show Map", font=(FONT, 13), command=map_screen).place(x=750, y=10)  
 
     # Top Grid Containers
     frame_top = tk.Frame(trial_window)
@@ -207,6 +211,17 @@ def trial_mode():
 
     # Enter Button
     tk.Button(trial_window, text="Enter", command=validate_and_proceed, font=("Arial", 16)).pack(pady=0)
+
+def map_screen():
+    trial_reset_window()
+
+        # Map display
+    map_image = tk.PhotoImage(file=map_image_path) 
+    trial_window.map_image = map_image  # Prevent garbage collection
+    map_label = tk.Label(trial_window, image=map_image)
+    map_label.pack(pady=70)
+
+    tk.Button(trial_window, text="Go Back", font=(FONT, 13), command=trial_mode).place(x=50, y=10)
 
 def calculate_price(departure_station, selected_station, is_return, adult_tickets, child_tickets, 
                     senior_tickets, student_tickets):
@@ -386,15 +401,15 @@ def validate_and_proceed():
 def display_error(message):
     error_popup = tk.Toplevel(trial_window)
     error_popup.title("Error")
-    error_popup.geometry("300x100")
+    error_popup.geometry("400x100")
 
     # Center the error popup
     x = trial_window.winfo_x() + (trial_window.winfo_width() // 2) - 150
     y = trial_window.winfo_y() + (trial_window.winfo_height() // 2) - 50
-    error_popup.geometry(f"300x100+{x}+{y}")
+    error_popup.geometry(f"400x100+{x}+{y}")
 
-    tk.Label(error_popup, text=message, fg="red").pack(pady=10)
-    tk.Button(error_popup, text="OK", command=error_popup.destroy).pack()
+    tk.Label(error_popup, text=message, font=(22), fg="red").pack(pady=10)
+    tk.Button(error_popup, text="OK", font=(22), command=error_popup.destroy).pack()
 
 def choose_dep_station():
     trial_reset_window()
@@ -631,6 +646,9 @@ def trial_reset_window():
     try:
         for widget in trial_window.winfo_children():
             widget.destroy()
+
+        # Get absolute path of the image
+        image_path = os.path.abspath("train-station-image.png")
 
     except Exception as e:
         print(f"Warning: Could not reset window - {e}")

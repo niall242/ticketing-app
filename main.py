@@ -2,12 +2,21 @@
 # Please open readme file for a detailed app description
 
 from tkinter import *
-from tkinter import messagebox
 import os
 import datetime  
 import uuid    # Generates unique IDs
 
+# Change working directory to the script's location
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+print(f"New Working Directory: {os.getcwd()}")  # Debugging check
+
 FONT = "Tahoma"
+BLUE = "#a6c8f5"
+YELLOW = "#f9f48f"
+RED = "#f15757"
+GREEN = "#aef98b"
+GREY = "#434343"
 
 # List of stations and zones
 stations = [
@@ -69,11 +78,21 @@ class TravelTicket:
         
         return ticket_text
 
+print(os.getcwd())  # Print the current working directory
 # The window must be reset after every new screen
 def reset_window():
     try:
         for widget in window.winfo_children():
             widget.destroy()
+
+        # Get absolute path of the image
+        image_path = os.path.abspath("train-station-image.png")
+
+        # Load the background image
+        bg_image = PhotoImage(file=image_path)
+        window.bg_image = bg_image  # Prevent garbage collection
+        bg_label = Label(window, image=bg_image)
+        bg_label.place(relwidth=1, relheight=1)  # Stretch to window size
 
     except Exception as e:
         print(f"Warning: Could not reset window - {e}")
@@ -82,17 +101,15 @@ def reset_window():
 def display_error(message):
     error_popup = Toplevel(window)
     error_popup.title("Error")
-    error_popup.geometry("300x100")
+    error_popup.geometry("400x100")
 
     # Center the error popup
     x = window.winfo_x() + (window.winfo_width() // 2) - 150
     y = window.winfo_y() + (window.winfo_height() // 2) - 50
-    error_popup.geometry(f"300x100+{x}+{y}")
+    error_popup.geometry(f"400x100+{x}+{y}")
 
-    Label(error_popup, text=message, fg="red").pack(pady=10)
-    Button(error_popup, text="OK", command=error_popup.destroy).pack()
-'''def show_error(message):
-    messagebox.showerror("Error", message)'''
+    Label(error_popup, text=message, font=(22), fg="red").pack(pady=10)
+    Button(error_popup, text="OK", font=(22), command=error_popup.destroy).pack()
 
 # Welcome screen
 def screen_1():
@@ -121,24 +138,24 @@ def screen_1():
     table_frame.pack(fill=BOTH, pady=0)
 
     # Central zone station list
-    central_frame = Frame(table_frame)
+    central_frame = Frame(table_frame, bg="pink")
     central_frame.pack(fill=X, pady=5)
-    Label(central_frame, text="Central Zone (Pink/Grey): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(central_frame, text=", ".join(sorted(CENTRAL)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
+    Label(central_frame, text="Central Zone (Pink/Grey): ", font=("Arial", 14, "bold"), bg="pink", anchor="w").pack(side=LEFT)
+    Label(central_frame, text=", ".join(sorted(CENTRAL)), font=("Arial", 12), bg="pink", anchor="w").pack(side=LEFT, padx=5)
 
     # Midtown zone station list
-    midtown_frame = Frame(table_frame)
+    midtown_frame = Frame(table_frame, bg=BLUE)
     midtown_frame.pack(fill=X, pady=5)
-    Label(midtown_frame, text="Midtown Zone (Blue): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(midtown_frame, text=", ".join(sorted(MIDTOWN)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
+    Label(midtown_frame, text="Midtown Zone (Blue): ", font=("Arial", 14, "bold"), bg=BLUE, anchor="w").pack(side=LEFT)
+    Label(midtown_frame, text=", ".join(sorted(MIDTOWN)), font=("Arial", 12), bg=BLUE, anchor="w").pack(side=LEFT, padx=5)
 
     # Downtown zone station list
-    downtown_frame = Frame(table_frame)
+    downtown_frame = Frame(table_frame, bg=YELLOW)
     downtown_frame.pack(fill=X, pady=5)
-    Label(downtown_frame, text="Downtown Zone (Yellow): ", font=("Arial", 14, "bold"), anchor="w").pack(side=LEFT)
-    Label(downtown_frame, text=", ".join(sorted(DOWNTOWN)), font=("Arial", 12), anchor="w").pack(side=LEFT, padx=5)
+    Label(downtown_frame, text="Downtown Zone (Yellow): ", font=("Arial", 14), bg=YELLOW, anchor="w").pack(side=LEFT)
+    Label(downtown_frame, text=", ".join(sorted(DOWNTOWN)), font=("Arial", 12), bg=YELLOW, anchor="w").pack(side=LEFT, padx=5)
 
-    Button(window, text="Next", font=("Arial", 24), command=screen_2).pack(side=BOTTOM, pady=15)
+    Button(window, text="Next", font=("Arial", 24, "bold"), command=screen_2).pack(side=BOTTOM, pady=15)
 
 def screen_2():
     reset_window()
@@ -173,9 +190,9 @@ def screen_2():
 
     # Zone buttons
     # These button presses are stored in variables
-    Radiobutton(button_frame, text="Central Zone", variable=start_zone, value="Central", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
-    Radiobutton(button_frame, text="Midtown Zone", variable=start_zone, value="Midtown", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
-    Radiobutton(button_frame, text="Downtown Zone", variable=start_zone, value="Downtown", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Central Zone", variable=start_zone, value="Central", bg="pink", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Midtown Zone", variable=start_zone, value="Midtown", bg=BLUE, indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Downtown Zone", variable=start_zone, value="Downtown", bg=YELLOW, indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
 
     # Back/next buttons frame
     nav_button_frame = Frame(window)
@@ -225,9 +242,9 @@ def screen_3():
 
     # Zone buttons
     # These button presses are stored in variables
-    Radiobutton(button_frame, text="Central Zone", variable=destination_zone, value="Central", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
-    Radiobutton(button_frame, text="Midtown Zone", variable=destination_zone, value="Midtown", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
-    Radiobutton(button_frame, text="Downtown Zone", variable=destination_zone, value="Downtown", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Central Zone", variable=destination_zone, value="Central", bg="pink", indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Midtown Zone", variable=destination_zone, value="Midtown", bg=BLUE, indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
+    Radiobutton(button_frame, text="Downtown Zone", variable=destination_zone, value="Downtown", bg=YELLOW, indicatoron=False, font=("Arial", 20)).pack(side=LEFT, padx=15)
 
     # Back/next buttons frame
     nav_button_frame = Frame(window)
