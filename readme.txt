@@ -1,6 +1,6 @@
 *TICKETING SYSTEM MAIN APP*
 
-*PLEASE DOWNLOAD ALL FILES TO THE SAME FOLDER AND THEN RUN MAIN.PY*
+*PLEASE DOWNLOAD ALL FILES TO THE SAME FOLDER AND THEN RUN MAIN.PY IN A PYTHON IDE*
 
 The program is mainly modular, every screen is a built inside a function
 To move between screens the navigation buttons use "command" to bind a function to it. When the button is pressed the function is called and another screen is opened  
